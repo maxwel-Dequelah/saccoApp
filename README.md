@@ -1,142 +1,222 @@
+Here’s the combined documentation for both backend and frontend in Markdown format, which you can copy directly into your `.md` file for GitHub:
 
 ---
 
-# Socco Mobile Application
+# **Project Documentation**
 
-## Overview
+## **Backend Documentation**
 
-**Socco Mobile Application** is a mobile app designed for members of a Savings and Credit Cooperative Organization (Sacco). The app allows users to check their account balances, manage deposits, request loans, and view transaction histories, among other functionalities. The app is built using React Native for the frontend and integrates with a backend service to fetch and update data.
+### **Introduction:**
+This section provides a comprehensive overview of the backend structure, listing all endpoints and services, along with the technologies used in the backend architecture.
 
-## Features
-
-- **Account Balance**: Users can check their current Sacco account balance.
-- **Deposits/Shares Capital**: Functionality for viewing and managing deposits (upcoming).
-- **Loan Requests**: Users can request loans directly through the app (upcoming).
-- **Loans Overview**: A section for managing and viewing active loans (upcoming).
-- **Mini Statements**: Access to recent transactions and mini statements (upcoming).
-- **Stop ATM**: Option to disable ATM services temporarily (upcoming).
-- **User Authentication**: Login functionality for members (in progress).
-- **Logout**: Securely log out from the app.
-
-## Current Progress
-
-### 1. **Dashboard Screen**
-
-- Displays the user's account information (username and account number).
-- Contains navigation cards for different app functionalities:
-  - **Account Balance**
-  - **Deposits/Shares Cap.**
-  - **Loan Requests**
-  - **Loans**
-- Includes a **Logout** button.
-- Background image and design elements for a visually appealing user interface.
-
-```javascript
-<Card
-  icon="💰"
-  title="Account Balance"
-  onPress={() => navigation.navigate("AccountBalance")}
-/>
-```
-
-### 2. **Account Balance Screen**
-
-- Displays the user's current account balance, fetched from the backend using Axios.
-- The balance is displayed in Ksh (Kenyan Shillings).
-- Includes a **Back to Dashboard** button for easy navigation.
-- Loading and error states are handled to ensure smooth user experience.
-
-```javascript
-const response = await axios.get("http://192.168.100.24:8000/api/balance/", {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
-```
-
-### 3. **AsyncStorage Integration**
-
-- User authentication data (username, token) is stored in `AsyncStorage`.
-- The app fetches the user's data from `AsyncStorage` to personalize the dashboard.
-
-```javascript
-const userData = await AsyncStorage.getItem("user");
-const token = await AsyncStorage.getItem("access");
-```
-
-### 4. **Navigation**
-
-- React Navigation is used to handle screen transitions, including navigating between the Dashboard and the Account Balance screen.
-
-```javascript
-const navigation = useNavigation();
-```
-
-### 5. **Logout Functionality**
-
-- Users can securely log out of the app, which clears the `AsyncStorage` and redirects them to the login page.
-
-```javascript
-await AsyncStorage.clear();
-navigation.navigate("Login");
-```
-
-## Upcoming Features
-
-- **Deposits and Shares**: Display and manage user deposits and share capital.
-- **Loan Requests**: Allow users to submit and track loan requests.
-- **Mini Statements**: Provide detailed views of recent transactions.
-- **Stop ATM Services**: Enable users to temporarily disable their ATM card.
-
-## Technologies Used
-
-- **React Native**: For building the mobile application interface.
-- **Axios**: For making HTTP requests to the backend API.
-- **AsyncStorage**: For storing user authentication data locally.
-- **React Navigation**: For handling in-app navigation.
-
-## How to Run
-
-To run the app on your local environment, follow these steps:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/socco-mobile-app.git
-   cd socco-mobile-app
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the app on an Android or iOS emulator:
-   ```bash
-   npm run android   # For Android
-   npm run ios       # For iOS
-   ```
-
-4. Ensure that your backend server is running, and update the base URL for the API if necessary in the code.
-
-## API Endpoints
-
-- **GET /api/balance/**: Fetches the current balance of the logged-in user.
-
-## Future Enhancements
-
-- Implement a user-friendly **loan management system**.
-- Add **notifications** for updates on loan approvals, account changes, and upcoming payments.
-- Implement **push notifications** to alert users of new account activity.
-- Create an **offline mode** that caches data for viewing account balances and statements without internet access.
-
-## License
-
-This project is licensed under the MIT License.
-
-## Contact
-
-If you have any questions or issues, please contact the project owner at [email@example.com].
+### **Technologies Used:**
+- **Backend Framework**: Django, Django Rest Framework
+- **Database**: PostgreSQL
+- **Authentication**: JWT Authentication
+- **Deployment**: Nginx, Docker, Gunicorn
 
 ---
 
-Feel free to adjust the links, email, or sections as necessary!
+### **1. User Authentication Endpoints**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/register/` | POST | Register a new user. Accepts username, email, password. |
+| `/api/auth/login/` | POST | Logs in a user and provides a JWT token. |
+| `/api/auth/logout/` | POST | Logs out the current user and invalidates the token. |
+| `/api/auth/profile/` | GET | Retrieves the logged-in user's profile details. Requires authentication. |
+| `/api/auth/profile/update/` | PUT | Updates the logged-in user's profile information. |
+
+---
+
+### **2. Service Request Endpoints**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/services/` | GET | Retrieves a list of all services available for users. |
+| `/api/services/request/` | POST | Submits a new service request. Requires service type, duration, and other details. |
+| `/api/services/{id}/` | GET | Fetches details of a specific service request by ID. |
+| `/api/services/{id}/approve/` | PUT | Approves a pending service request (Admin only). |
+| `/api/services/{id}/reject/` | PUT | Rejects a service request with an optional rejection message. |
+
+---
+
+### **3. Admin Endpoints**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/requests/` | GET | Retrieves a list of all service requests for admin approval. |
+| `/api/admin/users/` | GET | Retrieves a list of all users in the system. |
+| `/api/admin/reports/` | GET | Generates reports based on service usage and requests. |
+
+---
+
+### **4. Error Handling and Status Codes**
+
+| Status Code | Meaning |
+|-------------|---------|
+| `200 OK` | Request was successful. |
+| `201 Created` | Resource was successfully created. |
+| `400 Bad Request` | Invalid data provided in the request. |
+| `401 Unauthorized` | Authentication failed or missing token. |
+| `403 Forbidden` | User does not have permission to perform this action. |
+| `404 Not Found` | The requested resource does not exist. |
+| `500 Internal Server Error` | A server error occurred while processing the request. |
+
+---
+
+
+---
+
+## **Frontend Documentation**
+
+### **Introduction:**
+This section outlines the frontend structure of the application, describing each page, its components, and functionality. The screenshots can be added where indicated to provide a visual guide.
+
+---
+
+### **1. Home Page**
+
+#### **Description:**
+The Home Page is the landing page of the application. It provides an overview of the services offered and displays key features.
+
+#### **Key Features:**
+- Displays a welcome message and key application features.
+- Contains navigation to other sections like "Services" and "Login."
+
+#### **Components:**
+- **Navbar**: Navigation links to other sections.
+- **Hero Section**: Highlights the platform's main features.
+- **Footer**: Contains social media links and contact info.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **2. Login Page**
+
+#### **Description:**
+The Login Page allows users to sign in using their credentials.
+
+#### **Key Features:**
+- Fields for username and password.
+- 'Login' button to authenticate users.
+- 'Forgot Password' link for recovery.
+
+#### **Components:**
+- **Login Form**: Form for handling login requests.
+- **Error Alerts**: Displays error messages if authentication fails.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **3. Dashboard**
+
+#### **Description:**
+The Dashboard provides a summary of user activities and links to various services.
+
+#### **Key Features:**
+- Overview of recent user activities and service requests.
+- Links to service request forms.
+
+#### **Components:**
+- **Sidebar**: Navigation between services and profile settings.
+- **Overview Section**: Displays recent activities and user metrics.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **4. Request Service Page**
+
+#### **Description:**
+The Request Service Page allows users to submit requests for services such as Dark Fibre and Domain Registration.
+
+#### **Key Features:**
+- Form inputs for service type, duration, etc.
+- Submit button for sending the request.
+
+#### **Components:**
+- **Service Request Form**: Collects input data for the service request.
+- **Submission Confirmation**: Feedback after form submission.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **5. Admin Dashboard**
+
+#### **Description:**
+The Admin Dashboard displays all service requests and allows admins to manage them (Approve/Reject).
+
+#### **Key Features:**
+- View pending, approved, and rejected requests.
+- Approve or reject requests with a click.
+
+#### **Components:**
+- **Request List**: Displays service requests with actions.
+- **Details Section**: Detailed view of each service request.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **6. Profile Update Page**
+
+#### **Description:**
+The Profile Update Page allows users to modify their personal information.
+
+#### **Key Features:**
+- Form fields for updating profile details.
+- Save or discard changes.
+
+#### **Components:**
+- **Profile Form**: Editable form for user profile data.
+- **Submit Button**: Saves updated information.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **7. Contact Us Page**
+
+#### **Description:**
+The Contact Us Page lets users send messages or queries to the support team.
+
+#### **Key Features:**
+- Fields for message title, body, email, and phone number.
+- Submit button to send the message.
+
+#### **Components:**
+- **Contact Form**: Form to collect user input for the query.
+- **Success Alert**: Feedback after message submission.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
+
+### **8. Error Page (404/500)**
+
+#### **Description:**
+The Error Page is displayed when a user navigates to an incorrect or unavailable route.
+
+#### **Key Features:**
+- Friendly error message.
+- Link to navigate back to the Home Page.
+
+#### **Components:**
+- **Error Message**: Clear description of the error.
+- **Back Button**: Link to return to the Home Page.
+
+#### **Screenshot:**
+*(Insert screenshot here)*
+
+---
