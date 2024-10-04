@@ -1,4 +1,3 @@
-Here’s the combined documentation for both backend and frontend in Markdown format, which you can copy directly into your `.md` file for GitHub:
 
 ---
 
