@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.validators import MinValueValidator
 
 
 def generate_short_uuid():
@@ -51,7 +52,12 @@ class User(AbstractUser):
 # Balance model
 class Balance(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    balance = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00, 
+        validators=[MinValueValidator(0.00)]
+    )
     lastEdited = models.DateTimeField(auto_now=True)
 
     def __str__(self):

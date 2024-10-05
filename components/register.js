@@ -20,6 +20,7 @@ export default function Register({ navigation }) {
     dob: "",
     password: "",
   });
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const [date, setDate] = useState(new Date("2000-01-01"));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,10 +40,7 @@ export default function Register({ navigation }) {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://192.168.0.120:8000/api/signup/",
-        formData
-      );
+      const response = await axios.post(`${apiUrl}/api/signup/`, formData);
       Alert.alert("Success", "Registered successfully!");
       navigation.navigate("Login");
     } catch (error) {
