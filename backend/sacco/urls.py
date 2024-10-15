@@ -1,5 +1,5 @@
 from django.urls import path
-from .api.views import RegisterView, LoginView, TransactionListCreateView, BalanceRetrieveUpdateView
+from .api.views import RegisterView, LoginView, TransactionListCreateView, BalanceRetrieveUpdateView, UpdateProfileView, UserTransactionListView
 
 urlpatterns = [
     path('signup/', RegisterView.as_view(), name='signup'),
@@ -10,4 +10,8 @@ urlpatterns = [
 
     # Balance
     path('balance/', BalanceRetrieveUpdateView.as_view(), name='balance-retrieve-update'),  # Retrieve and update balance
+     path('users/<str:pk>/update/', UpdateProfileView.as_view(), name='update-profile'),
+    # path('deposit/', DepositSharesView.as_view(), name='deposit-shares'),
+    path('transactions/', UserTransactionListView.as_view(), name='user-transactions'),
+
 ]

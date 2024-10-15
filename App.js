@@ -5,6 +5,7 @@ import Login from "./components/login";
 import Register from "./components/register";
 import Dashboard from "./components/dashboard"; // Import the Dashboard component
 import AccountBalance from "./components/AccountBalance";
+import DepositsSharesScreen from "./components/deposits";
 
 const Stack = createStackNavigator();
 
@@ -30,6 +31,11 @@ export default function App() {
         <Stack.Screen
           name="Dashboard"
           component={Dashboard}
+          options={{ headerShown: false }} // Hides the header for Dashboard too
+        />
+        <Stack.Screen
+          name="DepositsSharesScreen"
+          component={DepositsSharesScreen}
           options={{ headerShown: false }} // Hides the header for Dashboard too
         />
         <Stack.Screen

@@ -99,6 +99,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         transaction = Transaction.objects.create(**validated_data)
         return transaction
 
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'dob', 'email']  # Exclude uneditable fields
+        
 # Balance Serializer
 class BalanceSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

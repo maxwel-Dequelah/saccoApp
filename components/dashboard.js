@@ -92,7 +92,12 @@ const Dashboard = () => {
           title="Account Balance"
           onPress={() => navigation.navigate("AccountBalance")}
         />
-        <Card icon="💼" title="Deposits/Shares Cap." onPress={() => {}} />
+        <Card
+          icon="💼"
+          title="Deposits/Shares Contribs"
+          onPress={() => navigation.navigate("DepositsSharesScreen")}
+        />
+
         <Card icon="📱" title="Loan Requests" onPress={() => {}} />
         <Card icon="💳" title="Loans" onPress={() => {}} />
       </View>

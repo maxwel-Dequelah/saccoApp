@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken  # JWT Token
 from rest_framework.exceptions import ValidationError
 from ..models import User, Transaction, Balance
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, TransactionSerializer, BalanceSerializer
+from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, TransactionSerializer, BalanceSerializer, UpdateProfileSerializer
 
 # Helper function to generate JWT tokens
 def get_tokens_for_user(user):
@@ -29,6 +29,20 @@ class RegisterView(generics.CreateAPIView):
             "user": UserSerializer(user).data,
             "message": "User registered successfully. Please log in."
         }, status=status.HTTP_201_CREATED)
+
+class UpdateProfileView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class=UpdateProfileSerializer
+    def put(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            serializer = UpdateProfileSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 # Login View
 class LoginView(APIView):
@@ -89,3 +103,10 @@ class BalanceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def get_object(self):
                
         return self.request.user.balance
+
+class UserTransactionListView(generics.ListAPIView):
+    serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user).order_by('-date')
