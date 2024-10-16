@@ -24,29 +24,6 @@ This section provides a comprehensive overview of the backend structure, listing
 | `/api/logout/` | POST | Logs out the current user and invalidates the token. |
 | `/api/profile/` | GET | Retrieves the logged-in user's profile details. Requires authentication. |
 | `/api/profile/update/` | PUT | Updates the logged-in user's profile information. |
-
----
-
-### **2. Service Request Endpoints**
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/services/` | GET | Retrieves a list of all services available for users. |
-| `/api/services/request/` | POST | Submits a new service request. Requires service type, duration, and other details. |
-| `/api/services/{id}/` | GET | Fetches details of a specific service request by ID. |
-| `/api/services/{id}/approve/` | PUT | Approves a pending service request (Admin only). |
-| `/api/services/{id}/reject/` | PUT | Rejects a service request with an optional rejection message. |
-
----
-
-### **3. Admin Endpoints**
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/admin/requests/` | GET | Retrieves a list of all service requests for admin approval. |
-| `/api/admin/users/` | GET | Retrieves a list of all users in the system. |
-| `/api/admin/reports/` | GET | Generates reports based on service usage and requests. |
-
 ---
 
 ### **4. Error Handling and Status Codes**
