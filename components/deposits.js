@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from "react-native";
+import RenderHTML from "react-native-render-html";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -16,28 +18,30 @@ const DepositsSharesScreen = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const token = await AsyncStorage.getItem("access"); // Get the token from storage
+        const token = await AsyncStorage.getItem("access");
+
         if (!token) {
           Alert.alert("Error", "Unable to fetch access token.");
           return;
         }
 
-        const response = await axios.get(
+        const { data } = await axios.get(
           `${process.env.EXPO_PUBLIC_API_URL}/api/transactions/`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        setTransactions(response.data); // Assuming the data is an array of transactions
-        setLoading(false);
+        setTransactions(data);
       } catch (error) {
         console.error("Error fetching transactions:", error);
         Alert.alert("Error", "Something went wrong. Please try again.");
+      } finally {
         setLoading(false);
       }
     };
@@ -45,34 +49,42 @@ const DepositsSharesScreen = () => {
     fetchTransactions();
   }, []);
 
+  const renderTransaction = ({ item }) => {
+    const source = {
+      html: `<p style="text-align:justify;">
+        ${item.transaction_type === "deposit" ? "💰 Deposit" : "🔻 Withdrawal"}
+        -    ${item.amount}   -  ${
+        new Date(item.date).toLocaleDateString() +
+        " " +
+        new Date(item.date).toLocaleTimeString()
+      }
+      </p>`,
+    };
+
+    return (
+      <View style={styles.transactionItem}>
+        <RenderHTML contentWidth={width} source={source} />
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="small" color="#4CAF50" />
       </View>
     );
   }
 
-  const renderTransaction = ({ item }) => (
-    <View style={styles.transactionItem}>
-      <Text style={styles.transactionText}>
-        {item.transaction_type === "deposit" ? "💰 Deposit" : "🔻 Withdrawal"} -
-        {item.amount} - {new Date(item.date).toLocaleDateString()}
-      </Text>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Transactions</Text>
-
       <FlatList
         data={transactions}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderTransaction}
         contentContainerStyle={styles.transactionList}
       />
-
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
@@ -93,6 +105,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#333",
+    marginTop: 20,
     marginBottom: 20,
     textAlign: "center",
   },
@@ -101,15 +114,10 @@ const styles = StyleSheet.create({
   },
   transactionItem: {
     backgroundColor: "#f9f9f9",
-    padding: 15,
+    padding: 5,
     borderRadius: 10,
     marginBottom: 10,
-    elevation: 2, // For shadow on Android
-  },
-  transactionText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "justify",
+    elevation: 2, // Shadow effect on Android
   },
   loadingContainer: {
     flex: 1,
