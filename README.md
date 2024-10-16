@@ -19,11 +19,11 @@ This section provides a comprehensive overview of the backend structure, listing
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/auth/register/` | POST | Register a new user. Accepts username, email, password. |
-| `/api/auth/login/` | POST | Logs in a user and provides a JWT token. |
-| `/api/auth/logout/` | POST | Logs out the current user and invalidates the token. |
-| `/api/auth/profile/` | GET | Retrieves the logged-in user's profile details. Requires authentication. |
-| `/api/auth/profile/update/` | PUT | Updates the logged-in user's profile information. |
+| `/api/register/` | POST | Register a new user. Accepts username, email, password. |
+| `/api/login/` | POST | Logs in a user and provides a JWT token. |
+| `/api/logout/` | POST | Logs out the current user and invalidates the token. |
+| `/api/profile/` | GET | Retrieves the logged-in user's profile details. Requires authentication. |
+| `/api/profile/update/` | PUT | Updates the logged-in user's profile information. |
 
 ---
 
