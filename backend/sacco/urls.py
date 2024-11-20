@@ -10,7 +10,7 @@ urlpatterns = [
 
     # Balance
     path('balance/', BalanceRetrieveUpdateView.as_view(), name='balance-retrieve-update'),  # Retrieve and update balance
-     path('users/<str:pk>/update/', UpdateProfileView.as_view(), name='update-profile'),
+    path('users/<str:pk>/update/', UpdateProfileView.as_view(), name='update-profile'),
     # path('deposit/', DepositSharesView.as_view(), name='deposit-shares'),
     path('transactions/', UserTransactionListView.as_view(), name='user-transactions'),
 
