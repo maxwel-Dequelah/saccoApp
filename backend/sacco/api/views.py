@@ -1,13 +1,20 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken  # JWT Token
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import ValidationError
-from ..models import User, Transaction, Balance
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, TransactionSerializer, BalanceSerializer, UpdateProfileSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils import timezone
 
-# Helper function to generate JWT tokens
+from ..models import User, Transaction, Balance, Loan, EmergencyFund
+from .serializers import (
+    RegisterSerializer, LoginSerializer, UserSerializer, UpdateProfileSerializer,
+    TransactionSerializer, BalanceSerializer,
+    LoanSerializer,
+    EmergencyFundSerializer
+)
+
+# Helper for token generation
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -15,7 +22,7 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
-# Register View
+# Registration View
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -24,25 +31,10 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        # No token generated here. User needs to log in separately.
         return Response({
             "user": UserSerializer(user).data,
             "message": "User registered successfully. Please log in."
         }, status=status.HTTP_201_CREATED)
-
-class UpdateProfileView(generics.UpdateAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class=UpdateProfileSerializer
-    def put(self, request, pk):
-        try:
-            user = User.objects.get(pk=pk)
-            serializer = UpdateProfileSerializer(user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 # Login View
 class LoginView(APIView):
@@ -50,63 +42,121 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        
-        # Generate JWT token
         tokens = get_tokens_for_user(user)
-        
         return Response({
             "tokens": tokens,
             "user": UserSerializer(user).data
-        }, status=status.HTTP_200_OK)
+        })
 
-# Transaction List/Create View
+# Profile Update
+class UpdateProfileView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UpdateProfileSerializer
+
+    def put(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            if user != request.user:
+                return Response({"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+            serializer = self.get_serializer(user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+# User List View (Admin Only)
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+# Transaction Views
 class TransactionListCreateView(generics.ListCreateAPIView):
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        # If the user is an admin, return all transactions
-        if user.is_staff:
+        if self.request.user.is_staff:
             return Transaction.objects.all()
-        # Otherwise, return only the transactions for the authenticated user
-        return Transaction.objects.filter(user=user)
+        return Transaction.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         user = self.request.user
         amount = serializer.validated_data['amount']
         transaction_type = serializer.validated_data['transaction_type']
 
-        # Get the user's balance record
         try:
             balance_record = Balance.objects.get(user=user)
         except Balance.DoesNotExist:
-            raise ValidationError("User balance record not found.")
+            raise ValidationError("Balance record not found.")
 
-        # Handle balance check and update before saving the transaction
         if transaction_type == 'withdrawal':
             if balance_record.balance < amount:
-                raise ValidationError("Insufficient balance for this withdrawal.")
-            balance_record.adjust_balance(-amount)  # Subtract from balance
+                raise ValidationError("Insufficient balance.")
+            balance_record.adjust_balance(-amount)
         elif transaction_type == 'deposit':
-            balance_record.adjust_balance(amount)  # Add to balance
+            balance_record.adjust_balance(amount)
 
-        # Save the transaction with the user info
         serializer.save(user=user)
-
-# Balance Retrieve/Update View
-class BalanceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
-    queryset = Balance.objects.all()
-    serializer_class = BalanceSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-               
-        return self.request.user.balance
 
 class UserTransactionListView(generics.ListAPIView):
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Transaction.objects.filter(user=self.request.user).order_by("-date")
+        return Transaction.objects.filter(user=self.request.user).order_by('-date')
+
+# Balance View
+class BalanceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = BalanceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.balance
+
+# Loan Views
+class LoanRequestView(generics.CreateAPIView):
+    serializer_class = LoanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, status='pending', request_date=timezone.now())
+
+class LoanListView(generics.ListAPIView):
+    serializer_class = LoanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Loan.objects.all()
+        return Loan.objects.filter(user=self.request.user)
+
+class LoanApproveView(generics.UpdateAPIView):
+    serializer_class = LoanSerializer
+    permission_classes = [IsAdminUser]
+    queryset = Loan.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        loan = self.get_object()
+        if loan.status != 'pending':
+            return Response({"error": "Loan already processed."}, status=status.HTTP_400_BAD_REQUEST)
+        loan.status = 'approved'
+        loan.approved_date = timezone.now()
+        loan.save()
+        return Response(LoanSerializer(loan).data)
+
+# Emergency Fund Views
+class EmergencyFundView(generics.CreateAPIView):
+    serializer_class = EmergencyFundSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, date_requested=timezone.now())
+
+class EmergencyFundAdminView(generics.ListAPIView):
+    serializer_class = EmergencyFundSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return EmergencyFund.objects.all()

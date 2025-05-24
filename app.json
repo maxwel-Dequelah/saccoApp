@@ -16,16 +16,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/sacco_logo.jpeg",
         "backgroundColor": "#ffffff"
-      }
+      },
+
+      "package": "com.dequelah.saccoApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiUrl": "http://192.168.0.111:8000/",
-      "otherEnvVar": "someValue"
+      "apiUrl": "http://192.168.0.103:8000/",
+      "otherEnvVar": "someValue",
+      "eas": {
+        "projectId": "0b362545-5485-4810-81cc-27344b1a40e1"
+      }
     }
   }
 }

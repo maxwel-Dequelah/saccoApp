@@ -54,7 +54,7 @@ const AccountBalance = () => {
     // Show loading spinner while balance is being fetched
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size={100} color="#4CAF50" />
       </View>
     );
   }
