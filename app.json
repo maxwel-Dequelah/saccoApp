@@ -12,14 +12,17 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dequelah.saccoApp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/sacco_logo.jpeg",
         "backgroundColor": "#ffffff"
       },
-
       "package": "com.dequelah.saccoApp"
     },
     "web": {
