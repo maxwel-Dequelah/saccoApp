@@ -73,9 +73,9 @@ const Dashboard = () => {
         {
           icon: "🧾",
           title: "Capture Transactions",
-          screen: "CaptureTransactionScreen",
+          screen: "CreateTransuction",
         },
-        { icon: "➕", title: "Capture Loans", screen: "CaptureLoanScreen" }
+        { icon: "➕", title: "Capture Loans", screen: "CreateTransuction" }
       );
     }
 
@@ -84,9 +84,9 @@ const Dashboard = () => {
         {
           icon: "✔️",
           title: "Approve Transactions",
-          screen: "ApproveTransactionsScreen",
+          screen: "TransactionApproval",
         },
-        { icon: "✔️", title: "Approve Loans", screen: "ApproveLoansScreen" }
+        { icon: "✔️", title: "Approve Loans", screen: "ApproveTransaction" }
       );
     }
 

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.contrib.auth import authenticate
-from ..models import User, Transaction, Balance, EmergencyFund, Loan, LoanGuarantor
+from ..models import User, Transaction, Balance, EmergencyFund, Loan, LoanGuarantor, PasswordResetOTP
 
 
 # User Serializer
@@ -73,13 +73,11 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ['id', 'user', 'date', 'amount', 'transaction_type', 'status', 'created_by', 'balance_after']
+        fields = '__all__'
         read_only_fields = ['status', 'created_by', 'balance_after']
 
     def validate(self, data):
-        user = self.context['request'].user
-        data['user'] = user
-
+        print(data)     
         if data['transaction_type'] == 'withdrawal':
             if data['amount'] <= 0:
                 raise serializers.ValidationError("Withdrawal amount must be positive.")
@@ -90,10 +88,26 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request_user = self.context['request'].user
-        validated_data['created_by'] = request_user
+        validated_data['created_by'] = request_user   
         validated_data['status'] = 'pending'
+        validated_data['user'] = validated_data['user']
         validated_data['balance_after'] = 0  # Will be updated upon approval
         return Transaction.objects.create(**validated_data)
+
+
+# 🔄 NEW Serializer to Approve Transaction and Update Balance
+class TransactionStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['status']
+
+    def update(self, instance, validated_data):
+        new_status = validated_data.get('status')
+        if new_status == 'approved' and instance.status != 'approved':
+            instance.approve()
+        else:
+            raise serializers.ValidationError("Only transition to 'approved' is supported.")
+        return instance
 
 
 # Balance Serializer
@@ -157,3 +171,44 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'dob', 'email']
+
+
+
+
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+
+    def validate_phone(self, value):
+        try:
+            user = User.objects.get(phoneNumber=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this phone number does not exist.")
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(min_length=6)
+
+    def validate(self, data):
+        phone = data.get("phone")
+        otp = data.get("otp")
+        try:
+            user = User.objects.get(phoneNumber=phone)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User not found.")
+
+        try:
+            otp_obj = PasswordResetOTP.objects.filter(user=user, code=otp).latest("created_at")
+        except PasswordResetOTP.DoesNotExist:
+            raise serializers.ValidationError("Invalid OTP.")
+
+        if otp_obj.is_expired():
+            raise serializers.ValidationError("OTP has expired.")
+
+        data["user"] = user
+        data["otp_obj"] = otp_obj
+        return data

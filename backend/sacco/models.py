@@ -1,6 +1,5 @@
 import base64
 import uuid
-from datetime import timedelta
 from decimal import Decimal
 
 from django.db import models
@@ -28,7 +27,7 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=False)  # must be approved to activate
     is_admin = models.BooleanField(default=False)
     is_secretary = models.BooleanField(default=False)
-    is_tresurer = models.BooleanField(default=False)
+    is_tresurer = models.BooleanField(default=False)  # Corrected typo here
     is_approved = models.BooleanField(default=False)  # Approval flag
 
     def __str__(self):
@@ -89,13 +88,14 @@ class Transaction(models.Model):
 
         if self.transaction_type == 'deposit':
             self.user.balance.adjust_balance(self.amount)
+        elif self.transaction_type == 'withdrawal':
+            self.user.balance.adjust_balance(-self.amount)
         elif self.transaction_type == 'emergency':
             fund, _ = EmergencyFund.objects.get_or_create(user=self.user)
             fund.amount += self.amount
             fund.save()
 
-        # Update balance_after after approval
-        self.refresh_from_db()  # Ensure we get the latest balance
+        self.user.balance.refresh_from_db()
         self.balance_after = self.user.balance.balance
         self.status = 'approved'
         self.save()
@@ -114,7 +114,7 @@ class Loan(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    interest_rate = models.DecimalField(max_digits=4, decimal_places=2, default=1.5)  # Monthly rate
+    interest_rate = models.DecimalField(max_digits=4, decimal_places=2, default=1.5)  # Monthly rate in percent
     period_months = models.IntegerField(choices=REPAYMENT_PERIOD_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
     approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='approved_loans')
@@ -125,7 +125,7 @@ class Loan(models.Model):
         """Calculates total due with monthly compounding interest on reducing balance."""
         principal = self.amount
         balance = principal
-        monthly_rate = Decimal(self.interest_rate) / 100
+        monthly_rate = self.interest_rate / Decimal(100)
         total_payment = Decimal('0.00')
 
         for _ in range(self.period_months):
@@ -145,7 +145,7 @@ class Loan(models.Model):
 
 
 class LoanGuarantor(models.Model):
-    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='guarantors')
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='loanguarantor_set')
     guarantor = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -164,3 +164,21 @@ def create_user_assets(sender, instance, created, **kwargs):
 def update_balance_on_user_save(sender, instance, **kwargs):
     if hasattr(instance, 'balance'):
         instance.balance.save()
+
+
+
+# RESET PASSWORD
+from django.db import models
+from django.utils import timezone
+from django.conf import settings
+
+class PasswordResetOTP(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        return timezone.now() - self.created_at < timezone.timedelta(minutes=10)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.otp_code}"

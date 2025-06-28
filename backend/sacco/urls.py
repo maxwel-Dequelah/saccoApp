@@ -1,26 +1,32 @@
 from django.urls import path
 from .api.views import (
-    RegisterView, LoginView, TransactionListCreateView, BalanceRetrieveUpdateView,
-    UpdateProfileView, UserTransactionListView,
+    RegisterView, LoginView,
+    UpdateProfileView, UserListView,
+    TransactionListView, TransactionCreateView, UserTransactionListView,
+    BalanceRetrieveUpdateView,
     LoanRequestView, LoanListView, LoanApproveView,
-    EmergencyFundView, EmergencyFundAdminView, UserListView
+    EmergencyFundView, EmergencyFundAdminView,
+    TransactionUpdateView,
+    PasswordResetRequestView, PasswordResetConfirmView
 )
 
 urlpatterns = [
-    # Auth
+    # Authentication
     path('signup/', RegisterView.as_view(), name='signup'),
     path('login/', LoginView.as_view(), name='login'),
 
-    # User Profile
+    # User Profile & List
     path('users/<str:pk>/update/', UpdateProfileView.as_view(), name='update-profile'),
     path('users/', UserListView.as_view(), name='user-list'),
 
     # Transactions
-    path('transactions/', TransactionListCreateView.as_view(), name='transaction-list-create'),
-    path('transactions/user/', UserTransactionListView.as_view(), name='user-transactions'),
+    path('transactions/', TransactionListView.as_view(), name='transaction-list'),
+    path('transactions/create/', TransactionCreateView.as_view(), name='transaction-create'),
+    path('transactions/my/', UserTransactionListView.as_view(), name='user-transactions'),
+    path('transactions/<str:pk>/approve/', TransactionUpdateView.as_view(), name = 'approve transuction'),
 
     # Balance
-    path('balance/', BalanceRetrieveUpdateView.as_view(), name='balance-retrieve-update'),
+    path('balance/', BalanceRetrieveUpdateView.as_view(), name='balance'),
 
     # Loans
     path('loans/request/', LoanRequestView.as_view(), name='loan-request'),
@@ -28,6 +34,8 @@ urlpatterns = [
     path('loans/<int:pk>/approve/', LoanApproveView.as_view(), name='loan-approve'),
 
     # Emergency Funds
-    path('emergency-fund/', EmergencyFundView.as_view(), name='emergency-fund'),
-    path('emergency-fund/admin/', EmergencyFundAdminView.as_view(), name='emergency-fund-admin'),
+    path('emergency-funds/request/', EmergencyFundView.as_view(), name='emergency-fund-request'),
+    path('emergency-funds/admin/', EmergencyFundAdminView.as_view(), name='emergency-fund-admin'),
+    path('api/passwordreset/', PasswordResetRequestView.as_view(), name="request-password-reset-otp"),
+    path("api/password-reset/confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
 ]
